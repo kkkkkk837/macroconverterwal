@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Macro Converter</title>
+<style>
+:root{--l:#333;--d:#8a8a8a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#000;color:#fff;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:28px 16px 40px}
+h1{margin:0 0 6px;font-size:12px;font-weight:400;letter-spacing:.45em}
+p{margin:0 0 20px;color:var(--d);font-size:13px}
+button{font:inherit;color:inherit;background:none;cursor:pointer}
+#drop{display:flex;flex-direction:column;align-items:center;gap:14px;border:1px dashed var(--l);border-radius:14px;padding:44px 16px;text-align:center;color:var(--d);font-size:13px}
+#drop.on{border-color:#fff}
+#pick{border:1px solid #fff;border-radius:26px;padding:15px 30px;font-size:16px;color:#fff}
+.card{border:1px solid var(--l);border-radius:12px;padding:14px;margin-top:12px}
+.card b{display:block;word-break:break-all;font-weight:500}
+.card span{display:block;color:var(--d);font-size:13px;margin-top:4px}
+.card .err{color:#fff}
+.card button{margin-top:12px;width:100%;border:1px solid #fff;background:#fff;color:#000;border-radius:10px;padding:13px 0}
+#all{display:none;width:100%;margin:16px 0 4px;border:1px solid #fff;background:#fff;color:#000;border-radius:10px;padding:15px 0;font-weight:500}
+small{display:block;margin-top:26px;color:var(--d);font-size:12px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);max-width:88%;background:#000;border:1px solid #fff;border-radius:10px;padding:10px 16px;font-size:14px;text-align:center;opacity:0;pointer-events:none;transition:.2s}
+#toast.s{opacity:1}
+
+[hidden]{display:none!important}
+#prog{margin-top:18px}#barw{height:2px;background:var(--l)}#bar{height:2px;background:#fff;width:0;transition:width .15s}
+#pt{display:block;margin-top:8px;font-size:13px;color:var(--d)}
+#sum{margin-top:22px;font-size:14px}
+#zip{width:100%;border:1px solid #fff;background:#fff;color:#000;border-radius:12px;padding:16px 0;font-size:16px;font-weight:500;margin-top:14px;word-break:break-all}
+#clear{display:block;margin:14px auto 0;color:var(--d);font-size:13px;padding:8px}
+details{margin-top:12px;border-top:1px solid var(--l)}summary{padding:12px 0;color:var(--d);font-size:13px;cursor:pointer}
+.row{border-top:1px solid var(--l);padding:10px 0;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.row b{font-weight:500;word-break:break-all}.row span{grid-column:1;color:var(--d);font-size:12px}
+.row button{grid-column:2;grid-row:1/3;border:1px solid var(--l);border-radius:8px;padding:8px 14px;font-size:13px}
+#fails .row span{color:#fff}
+
+.lab{margin:0 0 8px;color:var(--d);font-size:12px;letter-spacing:.08em}
+.seg{display:flex;gap:8px;margin-bottom:14px}
+.seg button{flex:1;border:1px solid var(--l);border-radius:10px;padding:13px 0}
+.seg button.on{background:#fff;color:#000;border-color:#fff}
+.tog{display:flex;align-items:center;gap:10px;margin:0 0 18px;font-size:14px}
+.tog input{width:20px;height:20px;accent-color:#fff}
+.tog.off{opacity:.35;pointer-events:none}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--l);border-radius:12px;padding:14px 16px;margin-bottom:14px;text-align:left}
+.prow b{display:block;font-weight:500;font-size:16px}.prow em{display:block;font-style:normal;color:var(--d);font-size:12px;margin-top:2px}.prow i{font-style:normal;color:var(--d);font-size:22px}
+#scrim2{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;z-index:5}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:#000;border:1px solid var(--l);border-bottom:0;border-radius:16px 16px 0 0;padding:16px 16px calc(12px + env(safe-area-inset-bottom,0px));display:none;z-index:6}
+#sheet h2{margin:0 0 6px;font-size:12px;font-weight:400;letter-spacing:.12em;color:var(--d)}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border-top:1px solid var(--l);padding:14px 2px;text-align:left}
+.opt:first-of-type{border-top:0}
+.opt b{display:block;font-weight:500;font-size:16px}.opt em{display:block;font-style:normal;color:var(--d);font-size:12px;margin-top:2px}
+.opt u{text-decoration:none;font-size:12px;color:var(--d);white-space:nowrap}
+.opt.on u{color:#000;background:#fff;border-radius:10px;padding:3px 10px}
+.opt.dis{opacity:.45}
+</style></head>
+<body><main>
+<h1>MACRO CONVERTER</h1>
+<p>Convert Geometry Dash macros between GDR, GDR2, CML and Astral. Pick the format you want, then select as many files as you like. The input format is detected for you, and files never leave your device.</p>
+<div class="lab">CONVERT TO</div>
+<button id="fmt" class="prow"><span><b id="fn"></b><em id="fd"></em></span><i>›</i></button>
+<div id="drop"><button id="pick">Choose macro files</button><span>.gdr, .gdr2, .cml or .ast, select many at once or drop them here</span></div>
+<input id="file" type="file" multiple hidden>
+<div id="prog" hidden><div id="barw"><div id="bar"></div></div><span id="pt"></span></div>
+<div id="res" hidden>
+<div id="sum"></div>
+<button id="zip"></button>
+<div id="fails"></div>
+<details id="det"><summary id="dt"></summary><div id="oks"></div></details>
+<button id="clear">Clear list</button>
+</div>
+<small>CML v7 is read and written, and was checked byte for byte against a real xdBot macro. Every result is read back and compared with the original before it is accepted, and one bad file never stops the rest. Frame fixes are kept whenever the format you pick can store them (GDR and CML); GDR2 and Astral can’t, so they are left out there, and the file list says so. Astral (.ast) is read and written, but only for clicks: it carries no author or level info, and 2 player or extra-button clicks aren’t supported yet. Older CML versions (1 to 6) are read for clicks only and are untested. Several files are bundled into one zip.</small>
+</main><div id="toast" role="status"></div>
+<div id="scrim2"></div><div id="sheet" role="dialog" aria-label="Choose a format"><h2>CHOOSE A FORMAT</h2><div id="fl"></div></div>
+<script>
+"use strict";
+const enc=new TextEncoder(),dec=new TextDecoder(),dvw=new DataView(new ArrayBuffer(8));
+const f32r=x=>{dvw.setFloat32(0,x,false);return dvw.getFloat32(0,false)};
+const qz=x=>{const v=f32r(f32r(x)*1e6);return Math.sign(v)*Math.floor(Math.abs(v)+.5)};
+const skey=i=>(i*0x3d+0xa7+((i>>1)*0x11))&255;
+function mp(u8){
+ const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);let i=0;
+ const num=(f,n)=>{const v=dv[f](i);i+=n;return v};
+ const str=n=>{const s=dec.decode(u8.subarray(i,i+n));i+=n;return s};
+ const arr=n=>{const a=[];while(n--)a.push(rd());return a};
+ const map=n=>{const o={};while(n--){const k=rd();o[k]=rd()}return o};
+ const skip=n=>{i+=n;return null};
+ function rd(){const b=u8[i++];
+  if(b<128)return b;if(b>=224)return b-256;
+  if(b<144)return map(b&15);if(b<160)return arr(b&15);if(b<192)return str(b&31);
+  switch(b){
+   case 192:return null;case 194:return false;case 195:return true;
+   case 196:return skip(num('getUint8',1));case 197:return skip(num('getUint16',2));case 198:return skip(num('getUint32',4));
+   case 202:return num('getFloat32',4);case 203:return num('getFloat64',8);
+   case 204:return num('getUint8',1);case 205:return num('getUint16',2);case 206:return num('getUint32',4);case 207:return Number(num('getBigUint64',8));
+   case 208:return num('getInt8',1);case 209:return num('getInt16',2);case 210:return num('getInt32',4);case 211:return Number(num('getBigInt64',8));
+   case 217:return str(num('getUint8',1));case 218:return str(num('getUint16',2));case 219:return str(num('getUint32',4));
+   case 220:return arr(num('getUint16',2));case 221:return arr(num('getUint32',4));
+   case 222:return map(num('getUint16',2));case 223:return map(num('getUint32',4));
+  }
+  throw Error('Unsupported MessagePack data');}
+ return rd();
+}
+
+/* ---- bit reader / writer (CML v7) ---- */
+class BR{constructor(d){this.d=d;this.p=0}
+ bit(){if((this.p>>3)>=this.d.length)throw Error('This file ends too early.');const v=(this.d[this.p>>3]>>(7-(this.p&7)))&1;this.p++;return v}
+ bits(n){let v=0;for(let i=0;i<n;i++)v=v*2+this.bit();return v}
+ vu(){let v=0,m=1,c;do{c=this.bit();v+=this.bits(7)*m;m*=128;if(m>2**62)throw Error('Bad CML number.')}while(c);return v}
+ vi(){const z=this.vu();return z%2?-(z+1)/2:z/2}
+ f32(){dvw.setUint32(0,this.bits(32),false);return dvw.getFloat32(0,false)}
+ st(enc_){const n=this.vu();if(n>1e6)throw Error('Bad CML text.');const a=new Uint8Array(n);for(let i=0;i<n;i++)a[i]=this.bits(8)^(enc_?skey(i):0);return dec.decode(a)}}
+class BW{constructor(){this.a=[];this.c=0;this.n=0}
+ bit(b){this.c=this.c*2+(b?1:0);if(++this.n==8){this.a.push(this.c);this.c=0;this.n=0}}
+ bits(v,n){for(let i=n-1;i>=0;i--)this.bit(Math.floor(v/2**i)%2)}
+ vu(v){let c;do{c=v>=128;this.bit(c);this.bits(v%128,7);v=Math.floor(v/128)}while(c)}
+ vi(v){this.vu(v>=0?v*2:-v*2-1)}
+ f32(x){dvw.setFloat32(0,x,false);this.bits(dvw.getUint32(0,false),32)}
+ st(t){const e=enc.encode(String(t==null?'':t));this.vu(e.length);e.forEach((c,i)=>this.bits(c^skey(i),8))}
+ done(){while(this.n)this.bit(0);return Uint8Array.from(this.a)}}
+const vlen=n=>{const o=[];while(n>=128){o.push(n%128|128);n=Math.floor(n/128)}o.push(n);return o};
+
+/* ---- gzip helpers ---- */
+const crcT=new Uint32Array(256).map((_,n)=>{for(let k=0;k<8;k++)n=n&1?0xEDB88320^(n>>>1):n>>>1;return n>>>0});
+const crc32=d=>{let c=-1;for(const x of d)c=crcT[(c^x)&255]^(c>>>8);return(c^-1)>>>0};
+async function pipe(u8,s){return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(s)).arrayBuffer())}
+async function gz(u8){
+ if(typeof CompressionStream!='undefined')return pipe(u8,new CompressionStream('gzip'));
+ const o=[0x1f,0x8b,8,0,0,0,0,0,0,3];for(let i=0;i<=u8.length;i+=65535){const c=u8.subarray(i,i+65535),f=i+65535>=u8.length?1:0;o.push(f,c.length&255,c.length>>8,~c.length&255,(~c.length>>8)&255,...c)}
+ const c=crc32(u8),n=u8.length;o.push(c&255,c>>8&255,c>>16&255,c>>>24,n&255,n>>8&255,n>>16&255,n>>>24);return Uint8Array.from(o)}
+async function inflate(u8){
+ if(typeof DecompressionStream=='undefined')throw Error('This browser can’t unpack CML files. Please update it.');
+ try{return await pipe(u8,new DecompressionStream(u8[0]==0x1f&&u8[1]==0x8b?'gzip':'deflate'))}catch(e){throw Error('The CML data inside is damaged.')}}
+
+/* ---- zstd (Astral) ---- */
+/* ---- zstd reader / writer (no compression on write: raw blocks are valid zstd) ---- */
+const zstd=(()=>{
+const LLB=[],LLX=[],MLB=[],MLX=[];
+{let b=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,20,22,24,28,32,40,48,64,128,256,512,1024,2048,4096,8192,16384,32768,65536],
+ x=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,4,6,7,8,9,10,11,12,13,14,15,16];LLB.push(...b);LLX.push(...x);
+ for(let i=0;i<32;i++){MLB.push(i+3);MLX.push(0)}
+ [35,37,39,41,43,47,51,59,67,83,99,131,259,515,1027,2051,4099,8195,16387,32771,65539].forEach((v,i)=>{MLB.push(v);MLX.push([1,1,1,1,2,2,3,3,4,4,5,7,8,9,10,11,12,13,14,15,16][i])})}
+const PLL=[4,3,2,2,2,2,2,2,2,2,2,2,2,1,1,1,2,2,2,2,2,2,2,2,2,3,2,1,1,1,1,1,-1,-1,-1,-1],
+ PML=[1,4,3,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1],
+ POF=[1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1,-1,-1,-1,-1];
+const lg=x=>31-Math.clz32(x);
+function fseTable(pr,al){
+ const n=1<<al,sym=new Uint8Array(n),nx=new Uint16Array(n),nb=new Uint8Array(n),cnt=pr.map(p=>p<0?1:p);
+ let hi=n-1;pr.forEach((p,s)=>{if(p<0)sym[hi--]=s});
+ const st=(n>>1)+(n>>3)+3;let pos=0;
+ pr.forEach((p,s)=>{for(let i=0;i<p;i++){sym[pos]=s;do pos=(pos+st)&(n-1);while(pos>hi)}});
+ if(pos!=0)throw Error('Bad zstd table.');
+ for(let i=0;i<n;i++){const s=sym[i],c=cnt[s]++,b=al-lg(c);nb[i]=b;nx[i]=(c<<b)-n}
+ return{al,sym,nx,nb}}
+function fseRead(b,p,maxS,maxA){
+ let bp=p*8;const rd=k=>{let v=0;for(let i=0;i<k;i++,bp++)v|=((b[bp>>3]>>(bp&7))&1)<<i;return v};
+ const al=rd(4)+5;if(al>maxA)throw Error('Bad zstd table.');
+ let rem=(1<<al)+1,th=1<<al,nbs=al+1;const pr=[];
+ while(rem>1&&pr.length<=maxS){
+  const mx=2*th-1-rem;let v=rd(nbs-1),c;
+  if(v<mx)c=v;else{v|=rd(1)<<(nbs-1);c=v>=th?v-mx:v}
+  c--;rem-=c<0?-c:c;pr.push(c);
+  if(c==0)for(;;){const r=rd(2);for(let i=0;i<r;i++)pr.push(0);if(r<3)break}
+  while(rem<th){nbs--;th>>=1}}
+ if(rem!=1)throw Error('Bad zstd table.');
+ return[fseTable(pr,al),Math.ceil(bp/8)]}
+class BB{constructor(b,s,e){const l=b[e-1];if(!l)throw Error('Bad zstd stream.');this.b=b;this.s=s;this.pos=(e-1-s)*8+lg(l)}
+ get(n){if(!n)return 0;let v=0;const lo=this.pos-n;this.pos=lo;
+  for(let i=0;i<n;i++){const k=lo+i;if(k>=0)v+=((this.b[this.s+(k>>3)]>>(k&7))&1)*2**i}return v}}
+function huff(b,p,e){
+ const hb=b[p++];let w=[];
+ if(hb<128){const[t,u]=fseRead(b,p,12,6),br=new BB(b,u,p+hb);
+  let s1=br.get(t.al),s2=br.get(t.al);
+  for(;;){w.push(t.sym[s1]);s1=t.nx[s1]+br.get(t.nb[s1]);if(br.pos<0){w.push(t.sym[s2]);break}
+   w.push(t.sym[s2]);s2=t.nx[s2]+br.get(t.nb[s2]);if(br.pos<0){w.push(t.sym[s1]);break}}
+  p+=hb}
+ else{const n=hb-127;for(let i=0;i<n;i++)w.push(i%2?b[p+(i>>1)]&15:b[p+(i>>1)]>>4);p+=Math.ceil(n/2)}
+ let sum=0;w.forEach(x=>{if(x)sum+=1<<(x-1)});const mb=lg(sum)+1,miss=(1<<mb)-sum;
+ if(miss&(miss-1))throw Error('Bad zstd table.');w.push(lg(miss)+1);
+ const sz=1<<mb,sym=new Uint8Array(sz),nb=new Uint8Array(sz);let pos=0;
+ for(let x=1;x<=mb;x++)w.forEach((v,s)=>{if(v==x){const r=1<<(x-1);sym.fill(s,pos,pos+r);nb.fill(mb+1-x,pos,pos+r);pos+=r}});
+ return[{mb,sym,nb},p]}
+function hdec(t,b,s,e,n,o){
+ const br=new BB(b,s,e);
+ for(let i=0;i<n;i++){const lo=br.pos-t.mb;let v=0;for(let k=0;k<t.mb;k++){const q=lo+k;if(q>=0)v+=((b[s+(q>>3)]>>(q&7))&1)<<k}
+  o.push(t.sym[v]);br.pos-=t.nb[v]}}
+function decode(b){
+ let p=0,out=new Uint8Array(1<<16),on=0;
+ const need=n=>{if(on+n>out.length){let c=out.length;while(c<on+n)c*=2;const o=new Uint8Array(c);o.set(out.subarray(0,on));out=o}};
+ while(p<b.length){
+  const mg=(b[p]|b[p+1]<<8|b[p+2]<<16|b[p+3]<<24)>>>0;
+  if(mg>=0x184D2A50&&mg<=0x184D2A5F){p+=8+(b[p+4]|b[p+5]<<8|b[p+6]<<16|b[p+7]*16777216);continue}
+  if(mg!=0xFD2FB528)throw Error('This is not zstd data.');
+  p+=4;const fh=b[p++],ss=fh>>5&1;if(!ss)p++;p+=[0,1,2,4][fh&3];p+=[ss?1:0,2,4,8][fh>>6];
+  let ht=null,tl=null,tf=null,to=null,rep=[1,4,8],last=0;
+  while(!last){
+   const h=b[p]|b[p+1]<<8|b[p+2]<<16;p+=3;last=h&1;const ty=h>>1&3,sz=h>>3;
+   if(ty==0){need(sz);out.set(b.subarray(p,p+sz),on);on+=sz;p+=sz;continue}
+   if(ty==1){need(sz);out.fill(b[p],on,on+sz);on+=sz;p++;continue}
+   if(ty==3)throw Error('Bad zstd block.');
+   const end=p+sz;let lit;
+   const l0=b[p],lt=l0&3,sf=l0>>2&3;
+   if(lt<2){let n;if(sf==0||sf==2){n=l0>>3;p++}else if(sf==1){n=(l0>>4)|b[p+1]<<4;p+=2}else{n=(l0>>4)|b[p+1]<<4|b[p+2]<<12;p+=3}
+    if(lt==0){lit=b.subarray(p,p+n);p+=n}else{lit=new Uint8Array(n).fill(b[p]);p++}}
+   else{let n,c,st=sf?4:1,hl;
+    if(sf<2){const v=l0|b[p+1]<<8|b[p+2]<<16;n=v>>4&1023;c=v>>14&1023;hl=3}
+    else if(sf==2){const v=(l0|b[p+1]<<8|b[p+2]<<16|b[p+3]*16777216)>>>0;n=v>>>4&16383;c=v>>>18;hl=4}
+    else{const v=l0+b[p+1]*256+b[p+2]*65536+b[p+3]*16777216+b[p+4]*4294967296;n=Math.floor(v/16)%262144;c=Math.floor(v/4194304)%262144;hl=5}
+    p+=hl;const ce=p+c;
+    if(lt==2)[ht,p]=huff(b,p,ce);else if(!ht)throw Error('Bad zstd literals.');
+    const o=[];
+    if(st==1)hdec(ht,b,p,ce,n,o);
+    else{const s1=b[p]|b[p+1]<<8,s2=b[p+2]|b[p+3]<<8,s3=b[p+4]|b[p+5]<<8,q=Math.ceil(n/4),a=p+6;
+     hdec(ht,b,a,a+s1,q,o);hdec(ht,b,a+s1,a+s1+s2,q,o);hdec(ht,b,a+s1+s2,a+s1+s2+s3,q,o);hdec(ht,b,a+s1+s2+s3,ce,n-3*q,o)}
+    lit=Uint8Array.from(o);p=ce}
+   let ns=b[p++];if(ns>=128){ns=ns<255?((ns-128)<<8)+b[p++]:b[p++]+(b[p++]<<8)+0x7f00}
+   let lp=0;
+   if(ns){
+    const md=b[p++],T=[];
+    [[PLL,6,35,md>>6,'l'],[POF,5,31,md>>4&3,'o'],[PML,6,52,md>>2&3,'m']].forEach(([pd,al,mx,m,k],i)=>{
+     const old=[tl,to,tf][i];let t;
+     if(m==0)t=fseTable(pd,al);else if(m==1){const s=b[p++];t={al:0,sym:[s],nx:[0],nb:[0]}}
+     else if(m==2){[t,p]=fseRead(b,p,mx,9)}else{t=old;if(!t)throw Error('Bad zstd table.')}
+     T[i]=t});
+    [tl,to,tf]=T;
+    const br=new BB(b,p,end);let sl=br.get(tl.al),so=br.get(to.al),sm=br.get(tf.al);
+    for(let i=0;i<ns;i++){
+     const oc=to.sym[so],mc=tf.sym[sm],lc=tl.sym[sl];
+     let ov=2**oc+br.get(oc);const ml=MLB[mc]+br.get(MLX[mc]),ll=LLB[lc]+br.get(LLX[lc]);
+     let off;
+     if(ov>3){off=ov-3;rep=[off,rep[0],rep[1]]}
+     else{const ix=ov-1+(ll==0?1:0);
+      if(ix==0)off=rep[0];else if(ix==1){off=rep[1];rep=[rep[1],rep[0],rep[2]]}
+      else if(ix==2){off=rep[2];rep=[rep[2],rep[0],rep[1]]}else{off=rep[0]-1;rep=[off,rep[0],rep[1]]}}
+     need(ll+ml);out.set(lit.subarray(lp,lp+ll),on);on+=ll;lp+=ll;
+     if(off<=0||off>on)throw Error('Bad zstd match.');
+     for(let k=0;k<ml;k++,on++)out[on]=out[on-off];
+     if(i<ns-1){sl=tl.nx[sl]+br.get(tl.nb[sl]);sm=tf.nx[sm]+br.get(tf.nb[sm]);so=to.nx[so]+br.get(to.nb[so])}}}
+   need(lit.length-lp);out.set(lit.subarray(lp),on);on+=lit.length-lp;p=end}
+  if(fh&4)p+=4}
+ return out.slice(0,on)}
+function encode(d){
+ const n=d.length,h=[0x28,0xb5,0x2f,0xfd];
+ if(n<256)h.push(0x20,n);else if(n<65792)h.push(0x60,(n-256)&255,(n-256)>>8);else h.push(0xa0,n&255,n>>8&255,n>>16&255,n>>>24);
+ const r=[Uint8Array.from(h)];let q=0;
+ do{const c=Math.min(131072,n-q),l=q+c>=n,k=(c<<3)|(l?1:0);r.push(Uint8Array.of(k&255,k>>8&255,k>>16&255),d.subarray(q,q+c));q+=c}while(q<n);
+ const t=r.reduce((a,x)=>a+x.length,0),u=new Uint8Array(t);let k=0;r.forEach(x=>{u.set(x,k);k+=x.length});return u}
+return{decode,encode}})();
+
+/* ---- model: GDR 1 field names ---- */
+const blank=()=>({author:'',description:'',duration:0,framerate:240,gameVersion:0,version:1,seed:0,coins:0,ldm:false,lastRecordedFrame:0,bot:{name:'',version:''},level:{id:0,name:''},inputs:[],frameFixes:[]});
+function detect(u8){
+ if(u8[0]==0xd7&&u8[1]==0x8a&&u8[2]==0x3e&&u8[3]==0x91||u8[0]==67&&u8[1]==77&&u8[2]==76&&u8[3]==0)return'cml';
+ if(u8[0]==71&&u8[1]==68&&u8[2]==82)return'gdr2';
+ if(u8[0]==65&&u8[1]==83&&u8[2]==84)return'ast';
+ return'gdr';
+}
+function readGdr1(u8){
+ let o;try{o=JSON.parse(dec.decode(u8))}catch(e){try{o=mp(u8)}catch(e2){throw Error('Not a readable GDR file (not JSON or MessagePack).')}}
+ if(!o||!Array.isArray(o.inputs))throw Error('No inputs found. Is this a GDR 1 replay?');
+ const m=blank(),n=(x,d)=>{x=Number(x);return isFinite(x)?x:d};
+ Object.assign(m,{author:o.author||'',description:o.description||'',duration:n(o.duration,0),framerate:n(o.framerate,240)||240,gameVersion:n(o.gameVersion,0),version:n(o.version,1),seed:n(o.seed,0),coins:n(o.coins,0),ldm:!!o.ldm});
+ m.bot={name:(o.bot&&o.bot.name)||'',version:String((o.bot&&o.bot.version)||'')};m.level={id:n(o.level&&o.level.id,0),name:(o.level&&o.level.name)||''};
+ m.inputs=o.inputs.map(x=>({frame:Math.max(0,Math.round(n(x.frame,0))),subframe:n(x.subframe,0),btn:Math.min(3,Math.max(1,n(x.btn,1)|0||1)),'2p':!!x['2p'],down:!!x.down}));
+ m.frameFixes=(o.frameFixes||[]).map(e=>{const p=q=>q&&{x:n(q.x,0),y:n(q.y,0),r:n(q.r,0)},r={frame:n(e.frame,0),p1:p(e.p1)||{x:0,y:0,r:0}};if(e.p2)r.p2=p(e.p2);return r});
+ m.lastRecordedFrame=n(o.lastRecordedFrame,m.inputs.reduce((a,x)=>Math.max(a,x.frame),0));return m;
+}
+function readGdr2(b){
+ let i=3;const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+ const v=()=>{let n=0,m=1,c;do{if(i>=b.length)throw Error('This GDR2 file ends too early.');c=b[i++];n+=(c&127)*m;m*=128}while(c&128);return n};
+ const s=()=>{const n=v();const t=dec.decode(b.subarray(i,i+n));i+=n;return t};
+ if(v()!=2)throw Error('Unsupported GDR2 version.');s();
+ const m=blank();m.author=s();m.description=s();m.duration=dv.getFloat32(i,false);i+=4;m.gameVersion=v()/1000;m.framerate=dv.getFloat64(i,false);i+=8;
+ m.seed=v();m.coins=v();m.ldm=!!b[i++];const pl=b[i++];m.bot={name:s(),version:String(v())};m.level={id:v(),name:s()};
+ const ex=v();i+=ex;const dn=v();for(let k=0;k<dn;k++)v();const tot=v(),c1=v();let prev=0;
+ for(let k=0;k<tot;k++){if(k==c1)prev=0;const c=v();prev+=Math.floor(c/(pl?8:2));m.inputs.push({frame:prev,subframe:0,btn:pl?Math.floor(c/2)%4:1,'2p':k>=c1,down:!!(c%2)})}
+ if(i!=b.length)throw Error('This GDR2 file has extra data I can’t read.');
+ m.lastRecordedFrame=m.inputs.reduce((a,x)=>Math.max(a,x.frame),0);return m;
+}
+async function readCml(u8){
+ let i=4;const enc_=u8[0]==0xd7;
+ const v=()=>{let n=0,m=1,c;do{c=u8[i++];n+=(c&127)*m;m*=128}while(c&128&&i<u8.length);return n};
+ const ver=v();if(!(ver>=1&&ver<=3||ver>=5&&ver<=7))throw Error('Unsupported CML version '+ver+'.');
+ let d=u8.subarray(i);if(ver>=5){v();d=await inflate(u8.subarray(i))}else d=u8.subarray(i);
+ const m=blank();
+ if(ver==7){
+  const r=new BR(d);m.author=r.st(enc_);m.description=r.st(enc_);m.duration=r.f32();m.gameVersion=r.f32();m.version=r.f32();m.framerate=r.f32()||240;
+  m.seed=r.vi();m.coins=r.vi();m.ldm=!!r.bit();m.lastRecordedFrame=r.vi();m.bot={name:r.st(enc_),version:r.st(enc_)};m.level={id:r.vu(),name:r.st(enc_)};
+  const n=r.vu();if(n>5e6)throw Error('Bad CML input count.');let sub=0;
+  for(let k=0;k<n;k++){sub+=r.bit()?1e6:r.vi();const f=r.bits(8);m.inputs.push({frame:Math.floor(sub/1e6),subframe:(sub%1e6)/1e6,btn:(f>>2)&3||1,'2p':!!(f&2),down:!!(f&1)})}
+  const c=r.vu();if(c>2e7)throw Error('Bad CML frame data.');sub=0;const pv=[[0,0,0],[0,0,0]];
+  for(let k=0;k<c;k++){sub+=r.bit()?1e6:r.vi();const mk=r.vu(),o=[[],[]];
+   for(let j=0;j<6;j++){const pl=j<3?0:1,a=j%3;if(mk>>j&1)pv[pl][a]+=r.vi();o[pl][a]=pv[pl][a]/1e6}
+   const e={frame:Math.floor(sub/1e6),p1:{x:o[0][0],y:o[0][1],r:o[0][2],q:[...pv[0]]}};if(pv[1].some(x=>x))e.p2={x:o[1][0],y:o[1][1],r:o[1][2],q:[...pv[1]]};m.frameFixes.push(e)}
+ }else{
+  let p=0;const b=d,u=()=>b[p++],vv=()=>{let n=0,mm=1,c;do{c=u();n+=(c&127)*mm;mm*=128}while(c&128);return n},vs=()=>{const z=vv();return z%2?-(z+1)/2:z/2};
+  const st=()=>{const n=vv();const a=new Uint8Array(n);for(let k=0;k<n;k++)a[k]=u()^(enc_?skey(k):0);return dec.decode(a)};
+  const fl=()=>{const x=new DataView(b.buffer,b.byteOffset+p,4).getFloat32(0,true);p+=4;return x};
+  m.author=st();m.description=st();fl();m.duration=fl();fl();m.framerate=fl()||240;vs();vs();u();m.lastRecordedFrame=vs();m.bot={name:st(),version:st()};m.level={id:vv(),name:st()};
+  const n=vv();let fr=0;for(let k=0;k<n;k++){fr+=vs();const f=u();m.inputs.push({frame:Math.floor(ver>=5?fr/1e6:fr),subframe:0,btn:1,'2p':!!(f&2),down:!!(f&1)})}
+ }
+ return m;
+}
+function readAst(u8){
+ if(u8[3]!=0x39)throw Error('This Astral version isn’t supported (only AST9 is known).');
+ let z=-1;for(let i=4;i<Math.min(u8.length-3,64);i++)if(u8[i]==0x28&&u8[i+1]==0xb5&&u8[i+2]==0x2f&&u8[i+3]==0xfd){z=i;break}
+ if(z<0)throw Error('No Astral data found in this file.');
+ let d;try{d=zstd.decode(u8.subarray(z))}catch(e){throw Error('The Astral data inside is damaged.')}
+ const m=blank(),fr=new DataView(u8.buffer,u8.byteOffset,u8.byteLength).getFloat32(7,true);
+ m.framerate=fr>=1&&fr<=1e4?fr:240;
+ const r=new BR(d),n=r.vu();if(n>5e6)throw Error('Bad Astral click count.');
+ r.bit();let f=0;
+ for(let k=0;k<n;k++){f+=r.vu();const c=r.bits(3);let down;
+  if(c==2)down=false;else if(c==1&&r.bits(2)==0)down=true;else throw Error('This Astral file has a click type I can’t read yet (2 player or extra buttons).');
+  m.inputs.push({frame:f,subframe:0,btn:1,'2p':false,down})}
+ m.lastRecordedFrame=f;m.duration=f/m.framerate;return m;
+}
+function read(u8){const k=detect(u8);return k=='cml'?readCml(u8):k=='gdr2'?readGdr2(u8):k=='ast'?readAst(u8):readGdr1(u8)}
+
+/* ---- writers ---- */
+class F{constructor(v){this.v=v}}
+function mpw(o,out){
+ const u=(t,v,n)=>{out.push(t);for(let i=n-1;i>=0;i--)out.push(Math.floor(v/2**(8*i))%256)};
+ if(o instanceof F){dvw.setFloat32(0,o.v,false);out.push(0xca,dvw.getUint8(0),dvw.getUint8(1),dvw.getUint8(2),dvw.getUint8(3))}
+ else if(typeof o=='boolean')out.push(o?0xc3:0xc2);
+ else if(typeof o=='number'){
+  if(!Number.isInteger(o)){dvw.setFloat64(0,o,false);out.push(0xcb);for(let i=0;i<8;i++)out.push(dvw.getUint8(i))}
+  else if(o>=0)o<128?out.push(o):o<256?u(0xcc,o,1):o<65536?u(0xcd,o,2):o<2**32?u(0xce,o,4):u(0xcf,o,8);
+  else o>=-32?out.push(256+o):o>=-128?u(0xd0,256+o,1):o>=-32768?u(0xd1,65536+o,2):o>=-(2**31)?u(0xd2,2**32+o,4):u(0xd3,2**64+o,8)}
+ else if(typeof o=='string'){const e=enc.encode(o),n=e.length;n<32?out.push(0xa0|n):n<256?out.push(0xd9,n):n<65536?u(0xda,n,2):u(0xdb,n,4);for(const c of e)out.push(c)}
+ else if(Array.isArray(o)){const n=o.length;n<16?out.push(0x90|n):n<65536?u(0xdc,n,2):u(0xdd,n,4);for(const x of o)mpw(x,out)}
+ else{const k=Object.keys(o),n=k.length;n<16?out.push(0x80|n):n<65536?u(0xde,n,2):u(0xdf,n,4);for(const x of k){mpw(x,out);mpw(o[x],out)}}
+}
+function writeGdr(m,keep){
+ const P=p=>({r:new F(p.r),x:new F(p.x),y:new F(p.y)});
+ const o={author:m.author,bot:{name:m.bot.name,version:m.bot.version},coins:m.coins,description:m.description,duration:new F(m.duration),
+  frameFixes:keep?m.frameFixes.map(e=>{const r={frame:e.frame,p1:P(e.p1)};if(e.p2)r.p2=P(e.p2);return r}):[],
+  framerate:new F(m.framerate),gameVersion:new F(m.gameVersion),
+  inputs:m.inputs.map(x=>({'2p':x['2p'],btn:x.btn,down:x.down,frame:x.frame,subframe:Number.isInteger(x.subframe)?x.subframe:new F(x.subframe)})),
+  lastRecordedFrame:m.lastRecordedFrame,ldm:m.ldm,level:{id:m.level.id,name:m.level.name},seed:m.seed,version:new F(m.version)};
+ const out=[];mpw(o,out);return Uint8Array.from(out);
+}
+function writeGdr2(m){
+ const o={...m,duration:m.duration,gameVersion:m.gameVersion,bot:{name:m.bot.name,version:m.bot.version}};
+ const W=[],v=x=>{x=Math.max(0,Math.floor(x));while(x>=128){W.push(x%128|128);x=Math.floor(x/128)}W.push(x)};
+ const s=t=>{const e=enc.encode(String(t==null?'':t));v(e.length);W.push(...e)};
+ const fl=(x,sz)=>{const a=new Uint8Array(sz),d=new DataView(a.buffer);sz==4?d.setFloat32(0,x,false):d.setFloat64(0,x,false);W.push(...a)};
+ const fr=Math.round(m.framerate)||240,ins=m.inputs,plat=ins.some(x=>x.btn!=1),srt=(a,b)=>a.frame-b.frame;
+ const p1=ins.filter(x=>!x['2p']).sort(srt),p2=ins.filter(x=>x['2p']).sort(srt),all=p1.concat(p2);
+ W.push(71,68,82);v(2);s('');s(m.author);s(m.description);fl(m.duration>0?m.duration:m.lastRecordedFrame/fr,4);v(Math.round(m.gameVersion*1000));fl(fr,8);
+ v(Math.trunc(m.seed)>>>0);v(m.coins);W.push(m.ldm?1:0,plat?1:0);s(m.bot.name);v(parseInt(m.bot.version)||0);v(m.level.id);s(m.level.name);v(0);v(0);v(all.length);v(p1.length);
+ for(const g of[p1,p2]){let prev=0;for(const x of g){const d=x.frame-prev;prev=x.frame;v(plat?d*8+x.btn*2+(x.down?1:0):d*2+(x.down?1:0))}}
+ return Uint8Array.from(W);
+}
+async function writeCml(m,keep){
+ const w=new BW();w.st(m.author);w.st(m.description);w.f32(m.duration);w.f32(m.gameVersion);w.f32(m.version);w.f32(m.framerate);
+ w.vi(m.seed);w.vi(m.coins);w.bit(m.ldm);w.vi(m.lastRecordedFrame);w.st(m.bot.name);w.st(m.bot.version);w.vu(m.level.id);w.st(m.level.name);
+ const ins=m.inputs.map(x=>({t:x.frame*1e6+Math.round(x.subframe*1e6),f:(x.down?1:0)|(x['2p']?2:0)|(x.btn<<2)})).sort((a,b)=>a.t-b.t);
+ w.vu(ins.length);let sub=0;
+ for(const x of ins){const d=x.t-sub;sub=x.t;if(d==1e6)w.bit(1);else{w.bit(0);w.vi(d)}w.bits(x.f,8)}
+ const fx=keep?m.frameFixes:[];w.vu(fx.length);sub=0;const pv=[[0,0,0],[0,0,0]];
+ for(const e of fx){const t=e.frame*1e6,d=t-sub;sub=t;if(d==1e6)w.bit(1);else{w.bit(0);w.vi(d)}
+  let mk=0;const ds=[];
+  [e.p1,e.p2].forEach((p,pl)=>{const c=p?(p.q||[qz(p.x),qz(p.y),qz(p.r)]):[0,0,0];for(let k=0;k<3;k++){const dv=c[k]-pv[pl][k];if(dv){mk|=1<<(pl*3+k);ds.push(dv)}}pv[pl]=c});
+  w.vu(mk);for(const dv of ds)w.vi(dv)}
+ const inner=w.done(),z=await gz(inner);
+ return Uint8Array.from([0xd7,0x8a,0x3e,0x91,7,...vlen(inner.length),...z]);
+}
+function writeAst(m){
+ const ins=m.inputs.slice().sort((a,b)=>a.frame-b.frame);
+ if(ins.some(x=>x['2p']||x.btn!=1))throw Error('Astral output for 2 player clicks or extra buttons isn’t supported yet.');
+ const w=new BW();w.vu(ins.length);w.bit(0);let p=0;
+ for(const x of ins){w.vu(x.frame-p);p=x.frame;if(x.down)w.bits(4,5);else w.bits(2,3)}
+ const z=zstd.encode(w.done()),h=new Uint8Array(14+z.length);
+ h.set([0x41,0x53,0x54,0x39]);new DataView(h.buffer).setFloat32(7,m.framerate||240,true);h[12]=0x24;h.set(z,14);return h;
+}
+const FMT={gdr:{ext:'gdr',name:'GDR',fix:true},gdr2:{ext:'gdr2',name:'GDR2',fix:false},cml:{ext:'cml',name:'CML v7',fix:true},ast:{ext:'ast',name:'Astral',fix:false}};
+async function write(m,to,keep){return to=='cml'?writeCml(m,keep):to=='gdr2'?writeGdr2(m):to=='ast'?writeAst(m):writeGdr(m,keep)}
+
+/* ---- check an output against its source ---- */
+function same(a,b,fixes){
+ const k=x=>x.frame+'|'+(x['2p']?1:0)+'|'+(x.down?1:0)+'|'+x.btn,A=a.inputs.map(k).sort(),B=b.inputs.map(k).sort();
+ if(A.length!=B.length||A.some((x,i)=>x!=B[i]))return'The clicks changed during conversion.';
+ if(fixes){if(a.frameFixes.length!=b.frameFixes.length)return'Frame fixes went missing.';
+  const t=(x,y)=>Math.abs(x-y)<=Math.abs(x)*2e-7+3e-6;
+  for(let i=0;i<a.frameFixes.length;i++){const x=a.frameFixes[i],y=b.frameFixes[i];
+   if(x.frame!=y.frame)return'Frame fixes moved.';
+   for(const p of['p1','p2']){if(!!x[p]!=!!y[p])return'Frame fixes changed.';if(x[p])for(const c of'xyr')if(!t(x[p][c],y[p][c]))return'Frame fix values changed.'}}}
+ return'';
+}
+
+function zip(fs){
+ const T=new Uint32Array(256).map((_,n)=>{for(let k=0;k<8;k++)n=n&1?0xEDB88320^(n>>>1):n>>>1;return n>>>0});
+ const crc=d=>{let c=-1;for(const x of d)c=T[(c^x)&255]^(c>>>8);return(c^-1)>>>0};
+ const u16=n=>[n&255,n>>8&255],u32=n=>[n&255,n>>8&255,n>>16&255,n>>>24],out=[],cen=[];let off=0;
+ for(const[n,d]of fs){const nm=enc.encode(n),c=crc(d),h=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0x800),...u16(0),...u16(0),...u16(0x21),...u32(c),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0)]);
+  out.push(h,nm,d);
+  cen.push(new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0x800),...u16(0),...u16(0),...u16(0x21),...u32(c),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nm);
+  off+=h.length+nm.length+d.length}
+ const cl=cen.reduce((a,x)=>a+x.length,0),e=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(fs.length),...u16(fs.length),...u32(cl),...u32(off),0,0]);
+ const all=[...out,...cen,e],r=new Uint8Array(all.reduce((a,x)=>a+x.length,0));let p=0;for(const x of all){r.set(x,p);p+=x.length}return r;
+}
+
+/* ---- one file through the pipeline ---- */
+const kb=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB',MAX=60*1048576;
+async function convertOne(u8,to){
+ const from=detect(u8),m=await read(u8),useFix=FMT[to].fix,out=await write(m,to,useFix);
+ const back=await read(out),bad=same(m,back,useFix);if(bad)throw Error('Self-check failed: '+bad);
+ const fx=m.frameFixes.length,note=!fx?'':useFix?fx.toLocaleString()+' frame fixes kept':'frame fixes left out ('+FMT[to].name+' can’t store them)';
+ const fl={cml:'CML',gdr2:'GDR2',gdr:'GDR',ast:'Astral'}[from];
+ return{bytes:out,info:fl+' to '+FMT[to].name+' · '+m.inputs.length+' inputs'+(note?' · '+note:'')+' · '+kb(u8.length)+' to '+kb(out.length)};
+}
+/* ---- ui ---- */
+const $=s=>document.querySelector(s);
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('s');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('s'),3600)}
+async function saveRaw(name,bytes){
+ try{const cap=window.claude&&await claude.use('downloads');
+  if(cap){try{await cap.save({filename:name,data:bytes});return}catch(e){
+   if(e&&e.code=='declined')return;
+   if(e&&e.code=='rejected_extension'){try{await cap.save({filename:name+'.zip',data:zip([[name,bytes]])});toast('Saved inside a zip, because this page can’t save .'+name.split('.').pop()+' directly.');return}catch(_){}}}}
+ }catch(e){}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=name;
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tick=()=>new Promise(r=>setTimeout(r,0));
+let to='cml',files=[],items=[],fails=[],inB=0,outB=0,q=Promise.resolve(),gen=0;const names=new Set();
+function uniq(n,ext){const b=n.replace(/\.[^.]*$/,'');let u=b+'.'+ext,k=2;while(names.has(u.toLowerCase()))u=b+' ('+k+++').'+ext;names.add(u.toLowerCase());return u}
+async function run(list,g){
+ if(!list.length)return;$('#prog').hidden=false;let n=0;
+ for(const f of list){
+  if(g!=gen)return;
+  $('#pt').textContent='Converting '+(++n)+' of '+list.length+'…';$('#bar').style.width=((n-1)/list.length*100)+'%';await tick();
+  try{
+   if(f.size>MAX)throw Error('Too large (over 60 MB), so it was skipped.');
+   const u8=new Uint8Array(await f.arrayBuffer()),r=await convertOne(u8,to);
+   if(g!=gen)return;
+   items.push({nm:uniq(f.name,FMT[to].ext),bytes:r.bytes,info:r.info});inB+=u8.length;outB+=r.bytes.length;
+  }catch(e){fails.push({nm:f.name,msg:(e&&e.message)||'Could not convert this file.'})}
+ }
+ $('#bar').style.width='100%';await tick();$('#prog').hidden=true;render();
+ toast(items.length?'Done: '+items.length+' converted'+(fails.length?', '+fails.length+' skipped':''):'Nothing could be converted');
+}
+function render(){
+ $('#res').hidden=!(items.length||fails.length);
+ $('#sum').textContent=items.length+' converted'+(fails.length?' · '+fails.length+' skipped':'')+(items.length?' · '+kb(inB)+' to '+kb(outB):'');
+ const z=$('#zip');z.hidden=!items.length;z.textContent=items.length>1?'Download all '+items.length+' (.zip)':items.length?'Download '+items[0].nm:'';
+ $('#fails').innerHTML=fails.map(f=>'<div class="row"><b>'+esc(f.nm)+'</b><span>'+esc(f.msg)+'</span></div>').join('');
+ const L=$('#oks'),fr=document.createDocumentFragment();
+ for(const it of items){const d=document.createElement('div');d.className='row';d.innerHTML='<b>'+esc(it.nm)+'</b><span>'+esc(it.info)+'</span><button>Save</button>';d.querySelector('button').onclick=()=>saveRaw(it.nm,it.bytes);fr.append(d)}
+ L.replaceChildren(fr);$('#det').hidden=!items.length;$('#dt').textContent='Show files ('+items.length+')';
+}
+function reset(){gen++;items=[];fails=[];inB=outB=0;names.clear();$('#prog').hidden=true;render()}
+const queue=(l,g)=>{q=q.then(()=>run(l,g)).catch(()=>{$('#prog').hidden=true;toast('Something went wrong. Your finished files are still listed.');render()})};
+const go=fs=>{if(fs.length){files=files.concat(fs);queue(fs,gen)}};
+const redo=()=>{reset();if(files.length)queue(files.slice(),gen)};
+$('#zip').onclick=()=>{
+ if(items.length==1)return saveRaw(items[0].nm,items[0].bytes);
+ let z;try{z=zip(items.map(i=>[i.nm,i.bytes]))}catch(e){return toast('Couldn’t build the zip. Try fewer files.')}
+ saveRaw('converted-macros.zip',z);
+};
+$('#clear').onclick=()=>{files=[];reset()};
+const FL=[['cml','CML v7','xdBot compressed macro (.cml)'],['gdr','GDR','xdBot and Mega Hack macro (.gdr)'],['gdr2','GDR2','Compact clicks-only macro (.gdr2)'],['ast','Astral','Astral macro (.ast)']];
+const sheet=o=>{$('#sheet').style.display=$('#scrim2').style.display=o?'block':'none'};
+function fmtShow(){const f=FL.find(x=>x[0]==to);$('#fn').textContent=f[1];$('#fd').textContent=f[2]}
+function fmtList(){$('#fl').innerHTML='';for(const f of FL){const b=document.createElement('button');b.className='opt'+(f[0]==to?' on':'')+(f[3]?' dis':'');
+  b.innerHTML='<span><b>'+f[1]+'</b><em>'+f[2]+'</em></span><u>'+(f[3]?'Coming soon':f[0]==to?'Selected':'')+'</u>';
+  b.onclick=()=>{if(f[3])return toast('Astral needs a matching example from another format before I can decode it.');sheet(0);if(f[0]!=to){to=f[0];fmtShow();redo()}};$('#fl').append(b)}}
+$('#fmt').onclick=()=>{fmtList();sheet(1)};$('#scrim2').onclick=()=>sheet(0);fmtShow();
+$('#pick').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const fs=[...e.target.files];e.target.value='';go(fs)};
+const dz=$('#drop');
+addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('on')});
+addEventListener('dragleave',e=>{if(!e.relatedTarget)dz.classList.remove('on')});
+addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('on');go([...e.dataTransfer.files])});
+
+</script></body></html>
